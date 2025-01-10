@@ -118,6 +118,13 @@ function connectWebSocket() {
                 gameStarted = true;
                 gameEnded = false;
                 restartButton.style.display = 'none';
+                // 게임 시작 시 컨트롤 설명 표시
+                document.querySelector('.controls').innerHTML = `
+                    <p>왼쪽 패들: W/S 키</p>
+                    <p>오른쪽 패들: ↑/↓ 키</p>
+                    <button id="restartButton" style="display: none;">게임 다시 시작</button>
+                    <button id="backToMenu">메인 메뉴로</button>
+                `;
                 // 게임 루프 시작
                 if (!gameLoopStarted) {
                     gameLoopStarted = true;
@@ -562,15 +569,16 @@ function checkScore(isLeftScore) {
 createRoomBtn.addEventListener('click', () => {
     const newRoomId = Math.random().toString(36).substring(7);
     
-    // 방 코드 표시
-    roomCodeDisplay.innerHTML = `방 코드: ${newRoomId}`;
-    roomCodeDisplay.style.display = 'block';
+    // 게임 화면으로 전환하고 컨트롤 설명 숨기기
+    onlineModeMenu.style.display = 'none';
+    gameScreen.style.display = 'block';
+    document.querySelector('.controls').innerHTML = `
+        <div class="waiting-message">
+            <p>방 코드: ${newRoomId}</p>
+            <p>다른 플레이어의 참가를 기다리는 중...</p>
+        </div>
+    `;
     
-    // 방 생성 버튼과 참여 버튼 숨기기
-    createRoomBtn.style.display = 'none';
-    joinRoomBtn.style.display = 'none';
-    
-    // 온라인 모드 설정 및 게임 시작
     isOnlineMode = true;
     roomId = newRoomId;
     window.history.pushState({}, '', `?room=${newRoomId}`);

@@ -135,3 +135,20 @@ button:active {
 .menu-button:hover {
     background-color: #45a049;
 }
+
+.waiting-message {
+    color: white;
+    text-align: center;
+    padding: 20px;
+}
+
+.waiting-message p {
+    margin: 10px 0;
+    font-size: 18px;
+}
+
+.waiting-message p:first-child {
+    font-size: 24px;
+    color: #4CAF50;
+    font-weight: bold;
+}
