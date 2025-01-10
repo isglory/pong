@@ -214,6 +214,19 @@ function draw() {
         return;
     }
 
+    if (gameEnded) {
+        // 게임 종료 메시지 표시
+        ctx.fillStyle = '#fff';
+        ctx.font = '30px Arial';
+        ctx.textAlign = 'center';
+        const winner = playerScore > computerScore ? '왼쪽' : '오른쪽';
+        ctx.fillText(
+            `${winner} 플레이어 승리!`,
+            canvas.width / 2,
+            canvas.height / 2 - 30
+        );
+    }
+
     // 패들 그리기
     ctx.fillStyle = '#fff';
     ctx.fillRect(leftPaddle.x, leftPaddle.y, paddleWidth, paddleHeight);
@@ -233,10 +246,6 @@ function draw() {
     ctx.lineTo(canvas.width / 2, canvas.height);
     ctx.strokeStyle = '#fff';
     ctx.stroke();
-
-    // 점수 업데이트
-    document.getElementById('player-score').textContent = playerScore;
-    document.getElementById('computer-score').textContent = computerScore;
 }
 
 // 게임 루드
@@ -248,6 +257,7 @@ const gameScreen = document.getElementById('gameScreen');
 const offlineModeBtn = document.getElementById('offlineMode');
 const onlineModeBtn = document.getElementById('onlineMode');
 const backToMenuBtn = document.getElementById('backToMenu');
+const restartButton = document.getElementById('restartButton');
 
 // 모드 선택 이벤트 리스너
 offlineModeBtn.addEventListener('click', () => {
@@ -281,17 +291,63 @@ function startGame() {
 // 온라인 모드 초기화
 function initOnlineMode() {
     // 웹소켓 연결
-    const ws = new WebSocket('ws://' + window.location.hostname + ':3000');
+    ws = new WebSocket('ws://' + window.location.hostname + ':3000');
     
-    // 기존의 온라인 모드 코드...
     ws.onopen = () => {
         ws.send(JSON.stringify({ type: 'join', roomId }));
         if (!window.location.search.includes('room')) {
             window.history.pushState({}, '', `?room=${roomId}`);
         }
     };
-    
-    // 나머지 웹소켓 이벤트 핸들러...
+
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        
+        switch (data.type) {
+            case 'player':
+                playerNumber = data.number;
+                break;
+
+            case 'start':
+                gameStarted = true;
+                gameEnded = false;
+                restartButton.style.display = 'none';
+                break;
+
+            case 'restart':
+                restartGame();
+                break;
+
+            case 'gameOver':
+                gameEnded = true;
+                restartButton.style.display = 'block';
+                break;
+
+            case 'paddleMove':
+                if (data.playerNumber === 1) {
+                    leftPaddle.y = data.y;
+                } else {
+                    rightPaddle.y = data.y;
+                }
+                break;
+
+            case 'ballUpdate':
+                if (playerNumber === 2) {  // 두 번째 플레이어는 첫 번째 플레이어의 공 위치를 따름
+                    ball.x = canvas.width - data.ball.x;  // 좌표 반전
+                    ball.y = data.ball.y;
+                    ball.speedX = -data.ball.speedX;
+                    ball.speedY = data.ball.speedY;
+                    playerScore = data.score.computerScore;
+                    computerScore = data.score.playerScore;
+                }
+                break;
+
+            case 'opponentLeft':
+                gameStarted = false;
+                waitingMessage = '상대방이 게임을 나갔습니다.';
+                break;
+        }
+    };
 }
 
 // 오프라인 모드 초기화
@@ -390,4 +446,61 @@ function gameLoop() {
 if (window.location.search.includes('room')) {
     isOnlineMode = true;
     startGame();
+}
+
+// 재시작 함수
+function restartGame() {
+    // 점수 초기화
+    playerScore = 0;
+    computerScore = 0;
+    document.getElementById('player-score').textContent = '0';
+    document.getElementById('computer-score').textContent = '0';
+    
+    // 패들 위치 초기화
+    leftPaddle.y = canvas.height / 2 - paddleHeight / 2;
+    rightPaddle.y = canvas.height / 2 - paddleHeight / 2;
+    
+    // 공 초기화
+    resetBall();
+    
+    // 게임 상태 초기화
+    gameEnded = false;
+    gameStarted = true;
+    
+    // 재시작 버튼 숨기기
+    restartButton.style.display = 'none';
+    
+    // 온라인 모드일 경우 상대방에게 재시작 알림
+    if (isOnlineMode && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'restart', roomId }));
+    }
+}
+
+// 재시작 버튼 이벤트 리스너
+restartButton.addEventListener('click', restartGame);
+
+// 점수 체크 함수 (온라인/오프라인 모드 공통)
+function checkScore(isLeftScore) {
+    if (isLeftScore) {
+        computerScore++;
+        document.getElementById('computer-score').textContent = computerScore;
+        if (computerScore >= 5) {
+            gameEnded = true;
+            restartButton.style.display = 'block';
+            if (isOnlineMode) {
+                ws.send(JSON.stringify({ type: 'gameOver', roomId }));
+            }
+        }
+    } else {
+        playerScore++;
+        document.getElementById('player-score').textContent = playerScore;
+        if (playerScore >= 5) {
+            gameEnded = true;
+            restartButton.style.display = 'block';
+            if (isOnlineMode) {
+                ws.send(JSON.stringify({ type: 'gameOver', roomId }));
+            }
+        }
+    }
+    resetBall();
 }
