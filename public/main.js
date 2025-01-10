@@ -10,6 +10,7 @@ let roomId = new URLSearchParams(window.location.search).get('room') ||
 // 게임 상태
 let gameStarted = false;
 let waitingMessage = '상대방을 기다리는 중...';
+let isPaused = false;
 
 // 캔버스 크기 설정
 canvas.width = 800;
@@ -57,6 +58,17 @@ const keys = {
 document.addEventListener('keydown', (e) => {
     if (e.key in keys) {
         keys[e.key] = true;
+    }
+    
+    // ESC 키 처리
+    if (e.key === 'Escape' && gameStarted) {
+        isPaused = !isPaused;
+        // 일시정지 시 모든 키 입력 초기화
+        if (isPaused) {
+            Object.keys(keys).forEach(key => {
+                keys[key] = false;
+            });
+        }
     }
 });
 
@@ -140,7 +152,7 @@ function connectWebSocket() {
 
 // 게임 업데이트 함수
 function update() {
-    if (!gameStarted) return;
+    if (!gameStarted || isPaused) return;
 
     // 패들 이동 로직
     if (playerNumber === 1) {
@@ -158,7 +170,7 @@ function update() {
                 y: leftPaddle.y
             }));
         }
-    } else {
+    } else if (!isPaused) {
         if (keys.ArrowUp && rightPaddle.y > 0) {
             rightPaddle.y -= rightPaddle.speed;
             ws.send(JSON.stringify({
@@ -175,8 +187,8 @@ function update() {
         }
     }
 
-    // 공 업데이트는 플레이어 1만 수행
-    if (playerNumber === 1) {
+    // 공 업데이트는 플레이어 1만 수행하고 일시정지 상태가 아닐 때만 수행
+    if (playerNumber === 1 && !isPaused) {
         // 공 이동
         ball.x += ball.speedX;
         ball.y += ball.speedY;
@@ -286,6 +298,18 @@ function draw() {
     ctx.lineTo(canvas.width / 2, canvas.height);
     ctx.strokeStyle = '#fff';
     ctx.stroke();
+
+    // 일시중지 상태일 때 메시지 표시
+    if (isPaused) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fff';
+        ctx.font = '30px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('일시중지', canvas.width / 2, canvas.height / 2);
+        ctx.font = '20px Arial';
+        ctx.fillText('계속하려면 ESC를 누르세요', canvas.width / 2, canvas.height / 2 + 40);
+    }
 }
 
 // 게임 루드
@@ -358,7 +382,7 @@ function initOfflineMode() {
     
     // 오프라인 모드의 update 함수
     function offlineUpdate() {
-        if (!gameStarted || gameEnded) return;
+        if (!gameStarted || gameEnded || isPaused) return;
         
         // 왼쪽 패들 (플레이어) 이동
         if (keys.w && leftPaddle.y > 0) {
