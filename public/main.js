@@ -260,7 +260,22 @@ function draw() {
     // 공 그리기
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ballSize, 0, Math.PI * 2);
-    ctx.fillStyle = '#fff';
+    
+    // 공의 속도 계산 (speedX와 speedY의 벡터 합)
+    const ballSpeed = Math.sqrt(ball.speedX * ball.speedX + ball.speedY * ball.speedY);
+    
+    // 속도에 따른 색상 계산
+    // 기본 속도(5)일 때는 흰색에 가깝게, 최대 속도(약 15)일 때는 진한 빨간색이 되도록 설정
+    const minSpeed = 5;  // 초기 속도
+    const maxSpeed = 15; // 예상 최대 속도
+    const intensity = Math.min((ballSpeed - minSpeed) / (maxSpeed - minSpeed), 1);
+    
+    // RGB 값 계산 (흰색 -> 빨간색)
+    const red = 255;  // 빨간색은 항상 최대
+    const green = Math.floor(255 * (1 - intensity));
+    const blue = Math.floor(255 * (1 - intensity));
+    
+    ctx.fillStyle = `rgb(${red}, ${green}, ${blue})`;
     ctx.fill();
     ctx.closePath();
 
