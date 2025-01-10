@@ -205,7 +205,7 @@ function connectWebSocket() {
 
 // 게임 업데이트 함수
 function update() {
-    if (!gameStarted || isPaused) return;
+    if (!gameStarted || isPaused || gameEnded) return; // 게임 종료 상태 확인
 
     // 패들 이동 로직
     if (playerNumber === 1) {
