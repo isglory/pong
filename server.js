@@ -120,11 +120,12 @@ wss.on('connection', (ws, req) => {
     ws.on('close', () => {
         console.log('클라이언트 연결 종료');
         if (rooms.has(roomId)) {
-            rooms.get(roomId) = rooms.get(roomId).filter(client => client !== ws);
-            if (rooms.get(roomId).length === 0) {
+            const updatedClients = rooms.get(roomId).filter(client => client !== ws);
+            if (updatedClients.length === 0) {
                 rooms.delete(roomId);
             } else {
-                rooms.get(roomId).forEach(client => {
+                rooms.set(roomId, updatedClients);
+                updatedClients.forEach(client => {
                     client.send(JSON.stringify({ type: 'opponentLeft' }));
                 });
             }

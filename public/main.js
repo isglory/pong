@@ -2,7 +2,7 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 // 캔소켓 연결
-const ws = new WebSocket('ws://' + window.location.hostname + ':3000');
+let ws;
 let playerNumber = 0;
 let roomId = new URLSearchParams(window.location.search).get('room') || 
              Math.random().toString(36).substring(7);
@@ -66,52 +66,77 @@ document.addEventListener('keyup', (e) => {
     }
 });
 
-// 웹소켓 이벤트 처리
-ws.onopen = () => {
-    ws.send(JSON.stringify({ type: 'join', roomId }));
-    // URL에 방 ID 표시
-    if (!window.location.search.includes('room')) {
-        window.history.pushState({}, '', `?room=${roomId}`);
-    }
-};
-
-ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
+// 웹소켓 연결 함수
+function connectWebSocket() {
+    ws = new WebSocket('ws://' + window.location.hostname + ':3000');
     
-    switch (data.type) {
-        case 'player':
-            playerNumber = data.number;
-            break;
+    ws.onopen = () => {
+        console.log('WebSocket 연결 성공!');
+        ws.send(JSON.stringify({ type: 'join', roomId }));
+        if (!window.location.search.includes('room')) {
+            window.history.pushState({}, '', `?room=${roomId}`);
+        }
+    };
 
-        case 'start':
-            gameStarted = true;
-            break;
+    ws.onerror = (error) => {
+        console.error('WebSocket 에러:', error);
+        alert('연결 에러가 발생했습니다. 콘솔을 확인해주세요.');
+    };
 
-        case 'paddleMove':
-            if (data.playerNumber === 1) {
-                leftPaddle.y = data.y;
-            } else {
-                rightPaddle.y = data.y;
-            }
-            break;
+    ws.onclose = (event) => {
+        console.log('WebSocket 연결 종료:', event.code, event.reason);
+    };
 
-        case 'ballUpdate':
-            if (playerNumber === 2) {  // 두 번째 플레이어는 첫 번째 플레이어의 공 위치를 따름
-                ball.x = canvas.width - data.ball.x;  // 좌표 반전
-                ball.y = data.ball.y;
-                ball.speedX = -data.ball.speedX;
-                ball.speedY = data.ball.speedY;
-                playerScore = data.score.computerScore;
-                computerScore = data.score.playerScore;
-            }
-            break;
+    // onmessage 핸들러를 여기로 이동
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        
+        switch (data.type) {
+            case 'player':
+                playerNumber = data.number;
+                break;
 
-        case 'opponentLeft':
-            gameStarted = false;
-            waitingMessage = '상대방이 게임을 나갔습니다.';
-            break;
-    }
-};
+            case 'start':
+                gameStarted = true;
+                gameEnded = false;
+                restartButton.style.display = 'none';
+                break;
+
+            case 'restart':
+                restartGame();
+                break;
+
+            case 'gameOver':
+                gameEnded = true;
+                restartButton.style.display = 'block';
+                break;
+
+            case 'paddleMove':
+                if (data.playerNumber === 1) {
+                    leftPaddle.y = data.y;
+                } else {
+                    rightPaddle.y = data.y;
+                }
+                break;
+
+            case 'ballUpdate':
+                if (playerNumber === 2) {
+                    ball.x = canvas.width - data.ball.x;
+                    ball.y = data.ball.y;
+                    ball.speedX = -data.ball.speedX;
+                    ball.speedY = data.ball.speedY;
+                    playerScore = data.score.computerScore;
+                    computerScore = data.score.playerScore;
+                }
+                break;
+
+            case 'opponentLeft':
+                gameStarted = false;
+                waitingMessage = '상대방이 게임을 나갔습니다.';
+                break;
+        }
+    };
+}
 
 // 게임 업데이트 함수
 function update() {
@@ -271,7 +296,10 @@ onlineModeBtn.addEventListener('click', () => {
 });
 
 backToMenuBtn.addEventListener('click', () => {
-    location.reload(); // 간단히 페이지 새로고침으로 처리
+    if (ws) {
+        ws.close();
+    }
+    location.reload();
 });
 
 // 게임 시작 함수
@@ -290,64 +318,7 @@ function startGame() {
 
 // 온라인 모드 초기화
 function initOnlineMode() {
-    // 웹소켓 연결
-    ws = new WebSocket('ws://' + window.location.hostname + ':3000');
-    
-    ws.onopen = () => {
-        ws.send(JSON.stringify({ type: 'join', roomId }));
-        if (!window.location.search.includes('room')) {
-            window.history.pushState({}, '', `?room=${roomId}`);
-        }
-    };
-
-    ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        
-        switch (data.type) {
-            case 'player':
-                playerNumber = data.number;
-                break;
-
-            case 'start':
-                gameStarted = true;
-                gameEnded = false;
-                restartButton.style.display = 'none';
-                break;
-
-            case 'restart':
-                restartGame();
-                break;
-
-            case 'gameOver':
-                gameEnded = true;
-                restartButton.style.display = 'block';
-                break;
-
-            case 'paddleMove':
-                if (data.playerNumber === 1) {
-                    leftPaddle.y = data.y;
-                } else {
-                    rightPaddle.y = data.y;
-                }
-                break;
-
-            case 'ballUpdate':
-                if (playerNumber === 2) {  // 두 번째 플레이어는 첫 번째 플레이어의 공 위치를 따름
-                    ball.x = canvas.width - data.ball.x;  // 좌표 반전
-                    ball.y = data.ball.y;
-                    ball.speedX = -data.ball.speedX;
-                    ball.speedY = data.ball.speedY;
-                    playerScore = data.score.computerScore;
-                    computerScore = data.score.playerScore;
-                }
-                break;
-
-            case 'opponentLeft':
-                gameStarted = false;
-                waitingMessage = '상대방이 게임을 나갔습니다.';
-                break;
-        }
-    };
+    connectWebSocket(); // 웹소켓 연결 함수 호출
 }
 
 // 오프라인 모드 초기화
