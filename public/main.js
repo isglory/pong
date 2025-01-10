@@ -163,6 +163,37 @@ function connectWebSocket() {
             case 'opponentLeft':
                 gameStarted = false;
                 waitingMessage = '상대방이 게임을 나갔습니다.';
+                // 컨트롤 영역에 메인 메뉴로 돌아가기 버튼 다시 추가
+                document.querySelector('.controls').innerHTML = `
+                    <p>${waitingMessage}</p>
+                    <button id="backToMenu">메인 메뉴로</button>
+                `;
+                
+                // 메인 메뉴로 버튼에 이벤트 리스너 다시 연결
+                document.getElementById('backToMenu').addEventListener('click', () => {
+                    if (ws) {
+                        ws.close();
+                    }
+                    
+                    // 게임 화면 숨기기
+                    gameScreen.style.display = 'none';
+                    onlineModeMenu.style.display = 'none';
+                    offlineModeMenu.style.display = 'none';
+                    
+                    // 모드 선택 화면 표시
+                    modeSelection.style.display = 'block';
+                    
+                    // URL에서 room 파라미터 제거
+                    window.history.pushState({}, '', window.location.pathname);
+                    
+                    // 게임 상태 초기화
+                    gameStarted = false;
+                    isOnlineMode = false;
+                    playerScore = 0;
+                    computerScore = 0;
+                    document.getElementById('player-score').textContent = '0';
+                    document.getElementById('computer-score').textContent = '0';
+                });
                 break;
         }
     };
@@ -569,15 +600,37 @@ function checkScore(isLeftScore) {
 createRoomBtn.addEventListener('click', () => {
     const newRoomId = Math.random().toString(36).substring(7);
     
-    // 게임 화면으로 전환하고 컨트롤 설명 숨기기
+    // 게임 화면으로 전환하고 대기 화면 표시
     onlineModeMenu.style.display = 'none';
     gameScreen.style.display = 'block';
     document.querySelector('.controls').innerHTML = `
         <div class="waiting-message">
             <p>방 코드: ${newRoomId}</p>
             <p>다른 플레이어의 참가를 기다리는 중...</p>
+            <button id="backToOnlineMenu" class="menu-button">뒤로가기</button>
         </div>
     `;
+
+    // 뒤로가기 버튼에 이벤트 리스너 추가
+    document.getElementById('backToOnlineMenu').addEventListener('click', () => {
+        // 게임 화면 숨기기
+        gameScreen.style.display = 'none';
+        
+        // 온라인 모드 메뉴로 돌아가기
+        onlineModeMenu.style.display = 'block';
+        
+        // URL에서 room 파라미터 제거
+        window.history.pushState({}, '', window.location.pathname);
+        
+        // 웹소켓 연결 종료
+        if (ws) {
+            ws.close();
+        }
+        
+        // 게임 상태 초기화
+        gameStarted = false;
+        isOnlineMode = false;
+    });
     
     isOnlineMode = true;
     roomId = newRoomId;
