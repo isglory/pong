@@ -338,11 +338,15 @@ const createRoomBtn = document.getElementById('createRoom');
 const joinRoomBtn = document.getElementById('joinRoom');
 const roomCodeDisplay = document.getElementById('roomCodeDisplay');
 const backToModeSelect = document.getElementById('backToModeSelect');
+const offlineModeMenu = document.getElementById('offlineModeMenu');
+const startOfflineGameBtn = document.getElementById('startOfflineGame');
+const backToModeSelectOffline = document.getElementById('backToModeSelectOffline');
 
 // 모드 선택 이벤트 리스너
 offlineModeBtn.addEventListener('click', () => {
     isOnlineMode = false;
-    startGame();
+    modeSelection.style.display = 'none';
+    offlineModeMenu.style.display = 'block';
 });
 
 onlineModeBtn.addEventListener('click', () => {
@@ -360,11 +364,8 @@ backToMenuBtn.addEventListener('click', () => {
 // 게임 시작 함수
 function startGame() {
     if (isOnlineMode) {
-        // 온라인 모드일 경우 웹소켓 연결만 수행
         initOnlineMode();
     } else {
-        // 오프라인 모드는 기존대로 진행
-        modeSelection.style.display = 'none';
         gameScreen.style.display = 'block';
         initOfflineMode();
     }
@@ -554,5 +555,17 @@ joinRoomBtn.addEventListener('click', () => {
 // 뒤로가기 버튼 클릭 핸들러
 backToModeSelect.addEventListener('click', () => {
     onlineModeMenu.style.display = 'none';
+    modeSelection.style.display = 'block';
+});
+
+// 오프라인 게임 시작 버튼 이벤트 추가
+startOfflineGameBtn.addEventListener('click', () => {
+    offlineModeMenu.style.display = 'none';
+    startGame();
+});
+
+// 오프라인 모드 뒤로가기 버튼 이벤트 추가
+backToModeSelectOffline.addEventListener('click', () => {
+    offlineModeMenu.style.display = 'none';
     modeSelection.style.display = 'block';
 });
