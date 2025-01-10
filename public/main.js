@@ -251,25 +251,65 @@ function update() {
             ball.speedY = -ball.speedY;
         }
 
+        // 왼쪽 벽 충돌 (오른쪽 플레이어 득점)
+        if (ball.x <= 0) {
+            computerScore++;
+            document.getElementById('computer-score').textContent = computerScore;
+            updateScore(2, computerScore);
+            
+            if (computerScore >= 5) {
+                handleWin(2);
+            } else {
+                resetBall();
+                if (isOnlineMode) {
+                    ws.send(JSON.stringify({
+                        type: 'roundEnd',
+                        roomId: roomId
+                    }));
+                }
+            }
+        }
+        
+        // 오른쪽 벽 충돌 (왼쪽 플레이어 득점)
+        if (ball.x >= canvas.width) {
+            playerScore++;
+            document.getElementById('player-score').textContent = playerScore;
+            updateScore(1, playerScore);
+            
+            if (playerScore >= 5) {
+                handleWin(1);
+            } else {
+                resetBall();
+                if (isOnlineMode) {
+                    ws.send(JSON.stringify({
+                        type: 'roundEnd',
+                        roomId: roomId
+                    }));
+                }
+            }
+        }
+
         // 패들 충돌 체크
         if (checkPaddleCollision(leftPaddle) || checkPaddleCollision(rightPaddle)) {
             ball.speedX = -ball.speedX * 1.1; // 속도 증가
         }
 
         // 공 위치 전송
-        ws.send(JSON.stringify({
-            type: 'ballUpdate',
-            ball: {
-                x: ball.x,
-                y: ball.y,
-                speedX: ball.speedX,
-                speedY: ball.speedY
-            },
-            score: {
-                playerScore,
-                computerScore
-            }
-        }));
+        if (isOnlineMode) {
+            ws.send(JSON.stringify({
+                type: 'ballUpdate',
+                ball: {
+                    x: ball.x,
+                    y: ball.y,
+                    speedX: ball.speedX,
+                    speedY: ball.speedY
+                },
+                score: {
+                    playerScore,
+                    computerScore
+                }
+            }));
+        }
     }
 }
 
