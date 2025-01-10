@@ -1,169 +1,130 @@
+:root {
+    --primary-color: #4CAF50;
+    --primary-dark: #45a049;
+    --bg-dark: #1a1a2e;
+    --text-color: #fff;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
 body {
     margin: 0;
-    background-color: #222;
+    background: linear-gradient(135deg, var(--bg-dark), #16213e);
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    font-family: Arial, sans-serif;
+    min-height: 100vh;
+    font-family: 'Segoe UI', sans-serif;
+    color: var(--text-color);
 }
 
 .game-container {
     text-align: center;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px var(--shadow-color);
+    backdrop-filter: blur(4px);
 }
 
 #score {
-    color: white;
-    font-size: 32px;
-    margin-bottom: 20px;
+    font-size: 3rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
 }
 
 #gameCanvas {
-    background-color: #000;
-    border: 2px solid white;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    box-shadow: 0 0 20px var(--shadow-color);
 }
 
 .controls {
-    color: white;
-    margin-top: 20px;
-}
-
-.controls p {
-    margin: 5px 0;
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
 }
 
 button {
-    margin: 10px;
-    padding: 10px 20px;
-    background-color: #444;
-    color: white;
-    border: 1px solid #666;
-    border-radius: 4px;
+    padding: 0.8rem 1.5rem;
+    background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
+    color: var(--text-color);
+    border: none;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.2);
 }
 
 button:hover {
-    background-color: #555;
-}
-
-button:active {
-    background-color: #333;
-}
-
-#modeSelection {
-    color: white;
-    text-align: center;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
 }
 
 #modeSelection h1 {
-    font-size: 48px;
-    margin-bottom: 40px;
+    font-size: 3.5rem;
+    margin-bottom: 3rem;
+    background: linear-gradient(45deg, var(--text-color), var(--primary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .mode-buttons {
     display: flex;
-    gap: 20px;
+    gap: 2rem;
     justify-content: center;
 }
 
-.mode-buttons button {
-    padding: 15px 30px;
-    font-size: 18px;
-    background-color: #444;
-    color: white;
-    border: 2px solid #666;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.mode-buttons button:hover {
-    background-color: #555;
-    transform: scale(1.05);
-}
-
-#backToMenu {
-    margin-top: 20px;
-}
-
-.room-code {
-    margin: 20px;
-    padding: 15px;
-    background-color: #333;
-    border-radius: 5px;
-    font-size: 20px;
-    color: #fff;
-    border: 2px solid #4CAF50;
-    display: inline-block;
-}
-
-#onlineModeMenu {
-    text-align: center;
-    padding: 20px;
-}
-
-#onlineModeMenu h2 {
-    color: #fff;
-    margin-bottom: 20px;
-    font-size: 24px;
-}
-
-#backToModeSelect {
-    margin-top: 20px;
-    background-color: #666;
-}
-
 .menu-container {
-    text-align: center;
-    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 2rem;
+    margin: 1.5rem 0;
+}
+
+.menu-container h2 {
+    color: var(--primary-color);
+    font-size: 2rem;
+    margin-bottom: 2rem;
 }
 
 .menu-button {
+    width: 250px;
+    margin: 1rem auto;
     display: block;
-    width: 200px;
-    margin: 10px auto;
-    padding: 10px;
-    font-size: 16px;
-    cursor: pointer;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-}
-
-.menu-button:hover {
-    background-color: #45a049;
 }
 
 .waiting-message {
-    color: white;
-    text-align: center;
-    padding: 20px;
-}
-
-.waiting-message p {
-    margin: 10px 0;
-    font-size: 18px;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    margin: 1.5rem 0;
 }
 
 .waiting-message p:first-child {
-    font-size: 24px;
-    color: #4CAF50;
+    font-size: 1.75rem;
+    color: var(--primary-color);
     font-weight: bold;
 }
 
-.waiting-message button {
-    margin-top: 20px;
-    background-color: #666;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    color: white;
-    cursor: pointer;
-    font-size: 16px;
+.room-code {
+    background: rgba(76, 175, 80, 0.1);
+    border: 2px solid var(--primary-color);
+    padding: 1.5rem;
+    border-radius: 10px;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    display: inline-block;
 }
 
-.waiting-message button:hover {
-    background-color: #777;
+#backToMenu {
+    background: linear-gradient(45deg, #666, #555);
+}
+
+#restartButton {
+    background: linear-gradient(45deg, #2196F3, #1976D2);
 }
