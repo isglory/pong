@@ -89,11 +89,13 @@ button:active {
 
 .room-code {
     margin: 20px;
-    padding: 10px;
+    padding: 15px;
     background-color: #333;
     border-radius: 5px;
-    font-size: 18px;
+    font-size: 20px;
     color: #fff;
+    border: 2px solid #4CAF50;
+    display: inline-block;
 }
 
 #onlineModeMenu {
@@ -104,6 +106,7 @@ button:active {
 #onlineModeMenu h2 {
     color: #fff;
     margin-bottom: 20px;
+    font-size: 24px;
 }
 
 #backToModeSelect {

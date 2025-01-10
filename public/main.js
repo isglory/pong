@@ -349,16 +349,42 @@ offlineModeBtn.addEventListener('click', () => {
     offlineModeMenu.style.display = 'block';
 });
 
+// 온라인 모드 버튼 클릭 이벤트 리스너
 onlineModeBtn.addEventListener('click', () => {
+    // 모드 선택 화면을 숨기고 온라인 모드 메뉴 표시
     modeSelection.style.display = 'none';
     onlineModeMenu.style.display = 'block';
+    
+    // 방 만들기/참여하기 버튼 초기 상태로 복원
+    createRoomBtn.style.display = 'block';
+    joinRoomBtn.style.display = 'block';
+    roomCodeDisplay.style.display = 'none';
 });
 
 backToMenuBtn.addEventListener('click', () => {
+    // 웹소켓 연결이 있다면 종료
     if (ws) {
         ws.close();
     }
-    location.reload();
+    
+    // 게임 화면 숨기기
+    gameScreen.style.display = 'none';
+    onlineModeMenu.style.display = 'none';
+    offlineModeMenu.style.display = 'none';
+    
+    // 모드 선택 화면 표시
+    modeSelection.style.display = 'block';
+    
+    // URL에서 room 파라미터 제거
+    window.history.pushState({}, '', window.location.pathname);
+    
+    // 게임 상태 초기화
+    gameStarted = false;
+    isOnlineMode = false;
+    playerScore = 0;
+    computerScore = 0;
+    document.getElementById('player-score').textContent = '0';
+    document.getElementById('computer-score').textContent = '0';
 });
 
 // 게임 시작 함수
@@ -532,12 +558,19 @@ function checkScore(isLeftScore) {
     resetBall();
 }
 
-// 방 만들기 버튼 클릭 핸들러 수정
+// 방 만들기 버튼 클릭 핸들러
 createRoomBtn.addEventListener('click', () => {
     const newRoomId = Math.random().toString(36).substring(7);
+    
+    // 방 코드 표시
     roomCodeDisplay.innerHTML = `방 코드: ${newRoomId}`;
     roomCodeDisplay.style.display = 'block';
     
+    // 방 생성 버튼과 참여 버튼 숨기기
+    createRoomBtn.style.display = 'none';
+    joinRoomBtn.style.display = 'none';
+    
+    // 온라인 모드 설정 및 게임 시작
     isOnlineMode = true;
     roomId = newRoomId;
     window.history.pushState({}, '', `?room=${newRoomId}`);
@@ -554,8 +587,14 @@ joinRoomBtn.addEventListener('click', () => {
 
 // 뒤로가기 버튼 클릭 핸들러
 backToModeSelect.addEventListener('click', () => {
+    // 온라인 모드 메뉴를 숨기고 모드 선택 화면으로 돌아가기
     onlineModeMenu.style.display = 'none';
     modeSelection.style.display = 'block';
+    
+    // 버튼들 초기 상태로 복원
+    createRoomBtn.style.display = 'block';
+    joinRoomBtn.style.display = 'block';
+    roomCodeDisplay.style.display = 'none';
 });
 
 // 오프라인 게임 시작 버튼 이벤트 추가
