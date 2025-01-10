@@ -84,10 +84,12 @@ function connectWebSocket() {
     
     ws.onopen = () => {
         console.log('WebSocket 연결 성공!');
-        ws.send(JSON.stringify({ type: 'join', roomId }));
-        if (!window.location.search.includes('room')) {
-            window.history.pushState({}, '', `?room=${roomId}`);
-        }
+        // 방에 참여 요청 전송
+        ws.send(JSON.stringify({ 
+            type: 'join', 
+            roomId,
+            isCreator: !window.location.search.includes('room') // 방 생성자 여부 전송
+        }));
     };
 
     ws.onerror = (error) => {
@@ -106,12 +108,21 @@ function connectWebSocket() {
         switch (data.type) {
             case 'player':
                 playerNumber = data.number;
+                // 플레이어 번호 할당 후 게임 화면 표시
+                modeSelection.style.display = 'none';
+                onlineModeMenu.style.display = 'none';
+                gameScreen.style.display = 'block';
                 break;
 
             case 'start':
                 gameStarted = true;
                 gameEnded = false;
                 restartButton.style.display = 'none';
+                // 게임 루프 시작
+                if (!gameLoopStarted) {
+                    gameLoopStarted = true;
+                    gameLoop();
+                }
                 break;
 
             case 'restart':
@@ -322,6 +333,11 @@ const offlineModeBtn = document.getElementById('offlineMode');
 const onlineModeBtn = document.getElementById('onlineMode');
 const backToMenuBtn = document.getElementById('backToMenu');
 const restartButton = document.getElementById('restartButton');
+const onlineModeMenu = document.getElementById('onlineModeMenu');
+const createRoomBtn = document.getElementById('createRoom');
+const joinRoomBtn = document.getElementById('joinRoom');
+const roomCodeDisplay = document.getElementById('roomCodeDisplay');
+const backToModeSelect = document.getElementById('backToModeSelect');
 
 // 모드 선택 이벤트 리스너
 offlineModeBtn.addEventListener('click', () => {
@@ -330,8 +346,8 @@ offlineModeBtn.addEventListener('click', () => {
 });
 
 onlineModeBtn.addEventListener('click', () => {
-    isOnlineMode = true;
-    startGame();
+    modeSelection.style.display = 'none';
+    onlineModeMenu.style.display = 'block';
 });
 
 backToMenuBtn.addEventListener('click', () => {
@@ -343,14 +359,13 @@ backToMenuBtn.addEventListener('click', () => {
 
 // 게임 시작 함수
 function startGame() {
-    modeSelection.style.display = 'none';
-    gameScreen.style.display = 'block';
-    
     if (isOnlineMode) {
-        // 온라인 모드 초기화
+        // 온라인 모드일 경우 웹소켓 연결만 수행
         initOnlineMode();
     } else {
-        // 오프라인 모드 초기화
+        // 오프라인 모드는 기존대로 진행
+        modeSelection.style.display = 'none';
+        gameScreen.style.display = 'block';
         initOfflineMode();
     }
 }
@@ -452,9 +467,10 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// URL에 room 파라미터가 있으면 자동으로 온라인 모드 시작
+// URL에 room 파라미터가 있을 때의 처리 수정
 if (window.location.search.includes('room')) {
     isOnlineMode = true;
+    roomId = new URLSearchParams(window.location.search).get('room');
     startGame();
 }
 
@@ -514,3 +530,29 @@ function checkScore(isLeftScore) {
     }
     resetBall();
 }
+
+// 방 만들기 버튼 클릭 핸들러 수정
+createRoomBtn.addEventListener('click', () => {
+    const newRoomId = Math.random().toString(36).substring(7);
+    roomCodeDisplay.innerHTML = `방 코드: ${newRoomId}`;
+    roomCodeDisplay.style.display = 'block';
+    
+    isOnlineMode = true;
+    roomId = newRoomId;
+    window.history.pushState({}, '', `?room=${newRoomId}`);
+    startGame();
+});
+
+// 방 참여하기 버튼 클릭 핸들러
+joinRoomBtn.addEventListener('click', () => {
+    const roomId = prompt('참여할 방 코드를 입력하세요:');
+    if (roomId) {
+        window.open(`${window.location.origin}?room=${roomId}`, '_blank');
+    }
+});
+
+// 뒤로가기 버튼 클릭 핸들러
+backToModeSelect.addEventListener('click', () => {
+    onlineModeMenu.style.display = 'none';
+    modeSelection.style.display = 'block';
+});

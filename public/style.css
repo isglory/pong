@@ -86,3 +86,27 @@ button:active {
 #backToMenu {
     margin-top: 20px;
 }
+
+.room-code {
+    margin: 20px;
+    padding: 10px;
+    background-color: #333;
+    border-radius: 5px;
+    font-size: 18px;
+    color: #fff;
+}
+
+#onlineModeMenu {
+    text-align: center;
+    padding: 20px;
+}
+
+#onlineModeMenu h2 {
+    color: #fff;
+    margin-bottom: 20px;
+}
+
+#backToModeSelect {
+    margin-top: 20px;
+    background-color: #666;
+}
