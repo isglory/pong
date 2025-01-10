@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong 게임</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- 모드 선택 화면 -->
+        <div id="modeSelection">
+            <h1>Pong 게임</h1>
+            <div class="mode-buttons">
+                <button id="offlineMode">오프라인 모드</button>
+                <button id="onlineMode">온라인 모드</button>
+            </div>
+        </div>
+
+        <!-- 게임 화면 (처음에는 숨김) -->
+        <div id="gameScreen" style="display: none;">
+            <div id="score">
+                <span id="player-score">0</span>
+                <span>:</span>
+                <span id="computer-score">0</span>
+            </div>
+            <canvas id="gameCanvas"></canvas>
+            <div class="controls">
+                <p>왼쪽 패들: W/S 키</p>
+                <p>오른쪽 패들: ↑/↓ 키</p>
+                <button id="restartButton" style="display: none;">게임 다시 시작</button>
+                <button id="backToMenu">메인 메뉴로</button>
+            </div>
+        </div>
+    </div>
+    <script src="main.js"></script>
+</body>
+</html>
