@@ -691,13 +691,69 @@ function handleScore() {
     }
 }
 
+// 승리 처리 함수 수정
+function handleWin(winner) {
+    if (isOnlineMode && ws) {
+        // 온라인 모드일 때 서버로 승리 정보 전송
+        ws.send(JSON.stringify({
+            type: 'gameWin',
+            roomId: roomId,
+            winner: winner
+        }));
+    }
+    
+    // 게임 종료 처리
+    gameEnded = true;
+    restartButton.style.display = 'block';
+}
+
+function updateScore(player, score) {
+    if (isOnlineMode && ws) {
+        // 온라인 모드일 때 서버로 점수 전송
+        ws.send(JSON.stringify({
+            type: 'updateScore',
+            roomId: roomId,
+            score: score,
+            player: player
+        }));
+    }
+    
+    // 화면에 점수 표시
+    if (player === 1) {
+        document.getElementById('player-score').textContent = score;
+    } else {
+        document.getElementById('computer-score').textContent = score;
+    }
+}
+
 // 소켓 이벤트 리스너 추가
-if (isOnline) {
-    socket.on('gameStateUpdate', (newState) => {
-        gameState = newState;
-        ball.x = newState.ball.x;
-        ball.y = newState.ball.y;
-        ball.dx = newState.ball.dx;
-        ball.dy = newState.ball.dy;
+if (isOnlineMode) {
+    // WebSocket 메시지 이벤트 리스너
+    ws.addEventListener('message', (event) => {
+        const data = JSON.parse(event.data);
+        
+        switch(data.type) {
+            case 'gameStateUpdate':
+                ball.x = data.ball.x;
+                ball.y = data.ball.y;
+                ball.speedX = data.ball.speedX;
+                ball.speedY = data.ball.speedY;
+                break;
+                
+            case 'scoreUpdated':
+                // 상대방의 점수 업데이트 수신
+                if (data.player === 1) {
+                    document.getElementById('player-score').textContent = data.score;
+                } else {
+                    document.getElementById('computer-score').textContent = data.score;
+                }
+                break;
+                
+            case 'gameResult':
+                // 게임 결과 수신
+                gameEnded = true;
+                restartButton.style.display = 'block';
+                break;
+        }
     });
 }

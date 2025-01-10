@@ -123,6 +123,31 @@ wss.on('connection', (ws, req) => {
                         });
                     }
                     break;
+
+                case 'updateScore':
+                    if (rooms.has(roomId)) {
+                        rooms.get(roomId).forEach(client => {
+                            if (client !== ws) {
+                                client.send(JSON.stringify({
+                                    type: 'scoreUpdated',
+                                    score: data.score,
+                                    player: data.player
+                                }));
+                            }
+                        });
+                    }
+                    break;
+
+                case 'gameWin':
+                    if (rooms.has(roomId)) {
+                        rooms.get(roomId).forEach(client => {
+                            client.send(JSON.stringify({
+                                type: 'gameResult',
+                                winner: data.winner
+                            }));
+                        });
+                    }
+                    break;
             }
         } catch (error) {
             console.error('메시지 처리 중 에러:', error);
