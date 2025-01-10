@@ -111,6 +111,18 @@ wss.on('connection', (ws, req) => {
                         });
                     }
                     break;
+
+                case 'roundEnd':
+                    if (rooms.has(roomId)) {
+                        rooms.get(roomId).forEach(client => {
+                            if (client !== ws) {
+                                client.send(JSON.stringify({
+                                    type: 'roundEnd'
+                                }));
+                            }
+                        });
+                    }
+                    break;
             }
         } catch (error) {
             console.error('메시지 처리 중 에러:', error);

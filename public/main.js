@@ -195,6 +195,10 @@ function connectWebSocket() {
                     document.getElementById('computer-score').textContent = '0';
                 });
                 break;
+
+            case 'roundEnd':
+                resetBall();
+                break;
         }
     };
 }
@@ -669,3 +673,31 @@ backToModeSelectOffline.addEventListener('click', () => {
     offlineModeMenu.style.display = 'none';
     modeSelection.style.display = 'block';
 });
+
+function handleScore() {
+    if (playerScore >= 5 || computerScore >= 5) {
+        gameEnded = true;
+        // 게임 종료 처리
+    } else {
+        // 라운드 종료 시 서버에 알림
+        if (isOnlineMode && ws) {
+            ws.send(JSON.stringify({
+                type: 'roundEnd',
+                roomId
+            }));
+        } else {
+            resetBall();
+        }
+    }
+}
+
+// 소켓 이벤트 리스너 추가
+if (isOnline) {
+    socket.on('gameStateUpdate', (newState) => {
+        gameState = newState;
+        ball.x = newState.ball.x;
+        ball.y = newState.ball.y;
+        ball.dx = newState.ball.dx;
+        ball.dy = newState.ball.dy;
+    });
+}
