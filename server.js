@@ -71,7 +71,7 @@ wss.on('connection', (ws, req) => {
                                 client.send(JSON.stringify({
                                     type: 'paddleMove',
                                     y: data.y,
-                                    playerNumber
+                                    playerNumber: data.playerNumber
                                 }));
                             }
                         });
@@ -81,13 +81,12 @@ wss.on('connection', (ws, req) => {
                 case 'ballUpdate':
                     if (rooms.has(roomId)) {
                         rooms.get(roomId).forEach(client => {
-                            if (client !== ws) {
-                                client.send(JSON.stringify({
-                                    type: 'ballUpdate',
-                                    ball: data.ball,
-                                    score: data.score
-                                }));
-                            }
+                            client.send(JSON.stringify({
+                                type: 'ballUpdate',
+                                ball: data.ball,
+                                score: data.score,
+                                sender: playerNumber
+                            }));
                         });
                     }
                     break;
@@ -126,14 +125,14 @@ wss.on('connection', (ws, req) => {
 
                 case 'updateScore':
                     if (rooms.has(roomId)) {
+                        const scoreData = {
+                            type: 'scoreUpdated',
+                            score: data.score,
+                            player: data.player,
+                            playerNumber: playerNumber
+                        };
                         rooms.get(roomId).forEach(client => {
-                            if (client !== ws) {
-                                client.send(JSON.stringify({
-                                    type: 'scoreUpdated',
-                                    score: data.score,
-                                    player: data.player
-                                }));
-                            }
+                            client.send(JSON.stringify(scoreData));
                         });
                     }
                     break;
@@ -145,6 +144,33 @@ wss.on('connection', (ws, req) => {
                                 type: 'gameResult',
                                 winner: data.winner
                             }));
+                        });
+                    }
+                    break;
+
+                case 'syncRequest':
+                    if (rooms.has(roomId)) {
+                        rooms.get(roomId).forEach(client => {
+                            if (client !== ws) {
+                                client.send(JSON.stringify({
+                                    type: 'syncRequest',
+                                    requestingPlayer: playerNumber
+                                }));
+                            }
+                        });
+                    }
+                    break;
+
+                case 'syncResponse':
+                    if (rooms.has(roomId)) {
+                        rooms.get(roomId).forEach(client => {
+                            if (client !== ws) {
+                                client.send(JSON.stringify({
+                                    type: 'syncResponse',
+                                    gameState: data.gameState,
+                                    respondingPlayer: playerNumber
+                                }));
+                            }
                         });
                     }
                     break;
