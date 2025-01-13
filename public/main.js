@@ -112,6 +112,13 @@ function connectWebSocket() {
                 modeSelection.style.display = 'none';
                 onlineModeMenu.style.display = 'none';
                 gameScreen.style.display = 'block';
+                
+                // 컨트롤 설명 업데이트
+                document.querySelector('.controls').innerHTML = `
+                    <p>${playerNumber === 1 ? 'W/S 키로 왼쪽 패들 조작' : '↑/↓ 키로 오른쪽 패들 조작'}</p>
+                    <button id="restartButton" style="display: none;">게임 다시 시작</button>
+                    <button id="backToMenu">메인 메뉴로</button>
+                `;
                 break;
 
             case 'start':
@@ -151,12 +158,24 @@ function connectWebSocket() {
 
             case 'ballUpdate':
                 if (playerNumber === 2) {
+                    // 플레이어 2의 경우 공의 위치만 반전
                     ball.x = canvas.width - data.ball.x;
                     ball.y = data.ball.y;
                     ball.speedX = -data.ball.speedX;
                     ball.speedY = data.ball.speedY;
-                    playerScore = data.score.computerScore;
-                    computerScore = data.score.playerScore;
+                    
+                    // 플레이어 2의 화면에서는 점수 위치를 반전
+                    document.getElementById('computer-score').textContent = data.score.computerScore;
+                    document.getElementById('player-score').textContent = data.score.playerScore;
+                } else {
+                    ball.x = data.ball.x;
+                    ball.y = data.ball.y;
+                    ball.speedX = data.ball.speedX;
+                    ball.speedY = data.ball.speedY;
+                    
+                    // 플레이어 1의 화면에서는 점수 그대로 표시
+                    document.getElementById('player-score').textContent = data.score.playerScore;
+                    document.getElementById('computer-score').textContent = data.score.computerScore;
                 }
                 break;
 
@@ -207,41 +226,47 @@ function connectWebSocket() {
 function update() {
     if (!gameStarted || isPaused || gameEnded) return; // 게임 종료 상태 확인
 
-    // 패들 이동 로직
+    // 패들 이동 로직 - 플레이어 번호에 따라 조작
     if (playerNumber === 1) {
+        // 왼쪽 패들 조작 (W/S 키)
         if (keys.w && leftPaddle.y > 0) {
             leftPaddle.y -= leftPaddle.speed;
             ws.send(JSON.stringify({
                 type: 'paddleMove',
-                y: leftPaddle.y
+                y: leftPaddle.y,
+                playerNumber: 1
             }));
         }
         if (keys.s && leftPaddle.y < canvas.height - paddleHeight) {
             leftPaddle.y += leftPaddle.speed;
             ws.send(JSON.stringify({
                 type: 'paddleMove',
-                y: leftPaddle.y
+                y: leftPaddle.y,
+                playerNumber: 1
             }));
         }
-    } else if (!isPaused) {
+    } else if (playerNumber === 2) {
+        // 오른쪽 패들 조작 (화살표 키)
         if (keys.ArrowUp && rightPaddle.y > 0) {
             rightPaddle.y -= rightPaddle.speed;
             ws.send(JSON.stringify({
                 type: 'paddleMove',
-                y: rightPaddle.y
+                y: rightPaddle.y,
+                playerNumber: 2
             }));
         }
         if (keys.ArrowDown && rightPaddle.y < canvas.height - paddleHeight) {
             rightPaddle.y += rightPaddle.speed;
             ws.send(JSON.stringify({
                 type: 'paddleMove',
-                y: rightPaddle.y
+                y: rightPaddle.y,
+                playerNumber: 2
             }));
         }
     }
 
-    // 공 업데이트는 플레이어 1만 수행하고 일시정지 상태가 아닐 때만 수행
-    if (playerNumber === 1 && !isPaused) {
+    // 공 업데이트는 플레이어 1만 수행
+    if (playerNumber === 1) {
         // 공 이동
         ball.x += ball.speedX;
         ball.y += ball.speedY;
@@ -255,7 +280,7 @@ function update() {
         if (ball.x <= 0) {
             computerScore++;
             document.getElementById('computer-score').textContent = computerScore;
-            updateScore(2, computerScore);
+            updateScore(2, computerScore); // 플레이어 2 득점
             
             if (computerScore >= 5) {
                 handleWin(2);
@@ -274,7 +299,7 @@ function update() {
         if (ball.x >= canvas.width) {
             playerScore++;
             document.getElementById('player-score').textContent = playerScore;
-            updateScore(1, playerScore);
+            updateScore(1, playerScore); // 플레이어 1 득점
             
             if (playerScore >= 5) {
                 handleWin(1);
@@ -305,8 +330,8 @@ function update() {
                     speedY: ball.speedY
                 },
                 score: {
-                    playerScore,
-                    computerScore
+                    playerScore: playerScore,    // 왼쪽 플레이어(1) 점수
+                    computerScore: computerScore // 오른쪽 플레이어(2) 점수
                 }
             }));
         }
@@ -344,17 +369,11 @@ function draw() {
         return;
     }
 
-    if (gameEnded) {
-        // 게임 종료 메시지 표시
-        ctx.fillStyle = '#fff';
-        ctx.font = '30px Arial';
-        ctx.textAlign = 'center';
-        const winner = playerScore > computerScore ? '왼쪽' : '오른쪽';
-        ctx.fillText(
-            `${winner} 플레이어 승리!`,
-            canvas.width / 2,
-            canvas.height / 2 - 30
-        );
+    // 플레이어 2의 경우 캔버스를 반전
+    if (playerNumber === 2) {
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.translate(-canvas.width, 0);
     }
 
     // 패들 그리기
@@ -366,17 +385,12 @@ function draw() {
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ballSize, 0, Math.PI * 2);
     
-    // 공의 속도 계산 (speedX와 speedY의 벡터 합)
+    // 공의 속도에 따른 색상 계산 (기존 코드 유지)
     const ballSpeed = Math.sqrt(ball.speedX * ball.speedX + ball.speedY * ball.speedY);
-    
-    // 속도에 따른 색상 계산
-    // 기본 속도(5)일 때는 흰색에 가깝게, 최대 속도(약 15)일 때는 진한 빨간색이 되도록 설정
-    const minSpeed = 5;  // 초기 속도
-    const maxSpeed = 15; // 예상 최대 속도
+    const minSpeed = 5;
+    const maxSpeed = 15;
     const intensity = Math.min((ballSpeed - minSpeed) / (maxSpeed - minSpeed), 1);
-    
-    // RGB 값 계산 (흰색 -> 빨간색)
-    const red = 255;  // 빨간색은 항상 최대
+    const red = 255;
     const green = Math.floor(255 * (1 - intensity));
     const blue = Math.floor(255 * (1 - intensity));
     
@@ -392,7 +406,12 @@ function draw() {
     ctx.strokeStyle = '#fff';
     ctx.stroke();
 
-    // 일시중지 상태일 때 메시지 표시
+    // 플레이어 2의 경우 캔버스 반전 복원
+    if (playerNumber === 2) {
+        ctx.restore();
+    }
+
+    // 일시중지 메시지 (캔버스 반전 밖에서 처리)
     if (isPaused) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -402,6 +421,19 @@ function draw() {
         ctx.fillText('일시중지', canvas.width / 2, canvas.height / 2);
         ctx.font = '20px Arial';
         ctx.fillText('계속하려면 ESC를 누르세요', canvas.width / 2, canvas.height / 2 + 40);
+    }
+
+    // 게임 종료 메시지 (캔버스 반전 밖에서 처리)
+    if (gameEnded) {
+        ctx.fillStyle = '#fff';
+        ctx.font = '30px Arial';
+        ctx.textAlign = 'center';
+        const winner = playerScore > computerScore ? '왼쪽' : '오른쪽';
+        ctx.fillText(
+            `${winner} 플레이어 승리!`,
+            canvas.width / 2,
+            canvas.height / 2 - 30
+        );
     }
 }
 
