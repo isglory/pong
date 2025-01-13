@@ -68,10 +68,11 @@ wss.on('connection', (ws, req) => {
                     if (rooms.has(roomId)) {
                         rooms.get(roomId).forEach(client => {
                             if (client !== ws) {
+                                const oppositePlayerNumber = data.playerNumber === 1 ? 2 : 1;
                                 client.send(JSON.stringify({
                                     type: 'paddleMove',
                                     y: data.y,
-                                    playerNumber: data.playerNumber
+                                    playerNumber: oppositePlayerNumber
                                 }));
                             }
                         });
